@@ -1,0 +1,33 @@
+// Colors
+
+$primary: #A9E7E5;
+.primary { color: $primary; }
+.bg-primary { background-color: $primary; }
+
+$primary_highlight: lighten($primary, 10%);
+
+$default: #5C5C5C;
+.default { color: $default; }
+.bg-default { background-color: $default; }
+
+$secondary: #AEAEAE;
+.secondary { color: $secondary; }
+.bg-secondary { background-color: $secondary; }
+
+$tertiary: #E0E0E0;
+.tertiary { color: $tertiary; }
+.bg-tertiary { background-color: $tertiary; }
+
+.white { color: #fff; }
+.bg-white { background-color: #fff; }
+
+.black { color: #000; }
+.bg-black { background-color: #000; }
+
+// Mixins
+
+@mixin tight {
+	margin: 0;
+	padding: 0;
+}
+.tight { @include tight; }

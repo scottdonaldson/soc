@@ -1,0 +1,167 @@
+// Imports
+@import "vars";
+@import "normalize";
+@import "reset";
+@import "layout";
+@import "forms";
+
+// UI
+@import "ui";
+
+// General styles
+* {
+	box-sizing: border-box;
+	position: relative;
+}
+
+body {
+	color: $default;
+	font-family: 'Franklin Gothic', Helvetica, Arial, sans-serif;
+	overflow-x: hidden;
+}
+
+.caps {
+	text-transform: uppercase;
+}
+
+.bold {
+	font-weight: bold;
+}
+
+.italic {
+	font-style: italic;
+}
+
+.lead {
+	font-size: 1.3em;
+}
+
+.caption {
+	color: $secondary;
+	font-size: 0.85em;
+	font-style: italic;
+}
+
+.anim-fade { transition: 0.333s opacity; }
+.faded, .lazy-load { opacity: 0; }
+
+pre, kbd, samp {
+	background: $default;
+	color: $secondary;
+	font-size: 14px;
+	overflow-x: auto;
+	padding: 20px;
+}
+	figure.highlight {
+		background: $default;
+		max-width: 100%; overflow-x: scroll;
+		td { vertical-align: top; }
+	}
+
+	.gutter { border-right: 1px solid $secondary; }
+	// TODO: style code snippets
+	// .property { color: #f00; }
+	.type { }
+
+.noteworthy {
+	color: $primary;
+	cursor: pointer;
+	border-bottom: 2px solid;
+	font-weight: bold;
+}
+
+$tooltip_width: 120px;
+.tooltip {
+	border: 3px solid $primary;
+	border-radius: 3px;
+	bottom: 50%;
+	display: inline-block;
+	margin-left: -$tooltip_width/2;
+	left: 50%;
+	opacity: 0;
+	position: absolute;
+	margin-bottom: 20px;
+	transition: 0.5s;
+	width: $tooltip_width;
+	z-index: -1;
+
+	&:before {
+		background: $primary;
+		content: "";
+		display: block;
+		height: 40px;
+		margin-left: -20px;
+		position: absolute;
+		bottom: -5px;
+		left: 50%;
+		width: 40px;
+		transform: rotate(45deg);
+	}
+
+	.noteworthy:hover & {
+		bottom: 100%;
+		margin-top: 0;
+		opacity: 1;
+		z-index: 999;
+	}
+}
+
+.vcenter {
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+// Links
+
+a {
+	border-bottom: 2px solid;
+	color: $default;
+	text-decoration: none;
+	transition: 0.1s color;
+
+	&:active, &:focus, &:hover {
+		color: $primary;
+
+		&.hover-white {
+			color: #fff;
+		}
+	}
+
+	.no-underline &,
+	&.no-underline {
+		border: 0;
+	}
+
+	.primary-underline &,
+	&.primary-underline {
+		border-color: $primary;
+	}
+
+	.animate-underline,
+	&.animate-underline {
+		border: 0;
+	}
+}
+
+.ext { // arrow for external links on hover
+
+	&:after {
+		background-image: url(/images/arrow.svg);
+		background-repeat: no-repeat;
+		content: "";
+		display: block;
+		height: 2em;
+		opacity: 0;
+		position: absolute;
+		right: -2.5em;
+		top: 0.5em;
+		transition: 0.1s opacity;
+		width: 2em;
+	}
+
+	&:active, &:hover {
+		&:after {
+			opacity: 1;
+		}
+	}
+}
