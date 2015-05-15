@@ -1,13 +1,11 @@
 S.utils = {};
 
 S.utils.show = function(el) {
-    var target = el || this;
-    target.style.display = 'block';
+    this.style.display = 'block';
 };
 
 S.utils.hide = function(el) {
-    var target = el || this;
-    target.style.display = 'none';
+    this.style.display = 'none';
 };
 
 S.utils.forEach = function(array, callback) {
