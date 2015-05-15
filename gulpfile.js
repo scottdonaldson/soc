@@ -4,13 +4,16 @@ var gulp = require('gulp'),
     autoprefixer = require('autoprefixer-core'),
     uglify = require('gulp-uglify'),
     concat = require('gulp-concat'),
-    awspublish = require('gulp-awspublish');
+    awspublish = require('gulp-awspublish'),
+    browserSync = require('browser-sync').create();
+var reload = browserSync.reload;
 
 // ----- Config
 var jsPrefix = 'app/js/src/';
+
 var paths = {
-    cssIn: 'app/scss/style.scss',
-    cssOut: 'app/css',
+    cssIn: 'app/scss/**/*.scss',
+    cssOut: 'app/css/',
     jsIn: ['utils', 'init', 'script'],
     jsOut: 'app/js/min'
 };
@@ -28,25 +31,19 @@ gulp.task('css', function() {
         .pipe(sass({
             outputStyle: 'compressed'
         }))
-        .pipe(gulp.dest( paths.cssOut ))
+        //.pipe(gulp.dest( paths.cssOut ))
         .pipe(postcss(processors))
-        .pipe(gulp.dest( paths.cssOut ));
+        .pipe(gulp.dest( paths.cssOut ))
+        .pipe(reload({ stream: true }));
 
 });
 
 gulp.task('js', function() {
 
-    gulp.src( paths.jsIn )
+    return gulp.src( paths.jsIn )
         //.pipe(uglify())
         .pipe(concat('script.js'))
         .pipe(gulp.dest( paths.jsOut ));
-});
-
-gulp.task('watch', function() {
-
-    gulp.watch( paths.cssIn, ['css'] );
-    gulp.watch( paths.jsIn, ['js'] );
-
 });
 
 gulp.task('publish', function() {
@@ -60,4 +57,18 @@ gulp.task('publish', function() {
 
 });
 
-gulp.task('default', ['css', 'js', 'watch']);
+gulp.task('serve', ['css', 'js'], function() {
+
+    browserSync.init({
+        server: {
+            baseDir: './app'
+        }
+    });
+
+    gulp.watch( paths.cssIn, ['css'] );
+    gulp.watch( paths.jsIn, ['js'] ).on('change', reload);
+
+
+});
+
+gulp.task('default', ['serve']);
