@@ -1,3 +1,39 @@
+(function(){
+
+S = window.S || {};
+
+// ----- Important: create a variable on the S object
+
+S.var = function(name, value) {
+
+    S[name] = value;
+
+    // for variable created with .var(),
+    // we'll keep track of observers and notify them with .prop()
+    S[name]._observers = [];
+
+    // notify observers when changes are made
+    S[name].prop = function(k, v) {
+        this[k] = v;
+        // publish changes
+        this._observers.forEach(function(ob) {
+            ob.func.call(ob.observer, this);
+        }, this);
+    }
+
+    // loop through observers, update them with this object
+    S.utils.forEach(S.observers, function(){
+        if ( name === this.target ) this.func.call(this.observer, value);
+
+        // add observers to this object
+        value._observers.push(this);
+    });
+
+    return value;
+};
+
+// ----- Utility functions
+
 S.utils = {};
 
 S.utils.show = function(el) {
@@ -27,3 +63,26 @@ S.utils.closest = function(el, selector) {
     }
     return null;
 };
+
+// return a random character from a string or random element from array
+S.utils.randFrom = function(q) {
+    return q[Math.floor( Math.random() * q.length )];
+};
+
+S.utils.randomGameId = function(time) {
+    var randomChars = 'abcdefghijklmnopqrstuvwxyz1234567890',
+        timeStamp = time ? time : new Date().getTime().toString(),
+        randomString = '',
+        i = 0,
+        output;
+
+    while ( i < 10 ) {
+        randomString += S.utils.randFrom(randomChars);
+        i++;
+    }
+
+    output = timeStamp + '_' + randomString;
+    return output;
+};
+
+})();

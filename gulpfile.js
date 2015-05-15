@@ -7,12 +7,16 @@ var gulp = require('gulp'),
     awspublish = require('gulp-awspublish');
 
 // ----- Config
+var jsPrefix = 'app/js/src/';
 var paths = {
     cssIn: 'app/scss/style.scss',
     cssOut: 'app/css',
-    jsIn: 'app/js/src/**/*.js',
+    jsIn: ['utils', 'init', 'script'],
     jsOut: 'app/js/min'
 };
+paths.jsIn.forEach(function(path, i) {
+    paths.jsIn[i] = jsPrefix + path + '.js';
+});
 
 gulp.task('css', function() {
 
