@@ -26,21 +26,24 @@ S.templates.loggedIn = {
         // remove any existing content
         this.innerHTML = '';
 
-        if ( user.games.length === 0 ) this.innerHTML = '<div>No games yet.</div>';
+        if ( user ) {
 
-        S.utils.forEach(user.games, function() {
+            if ( user.games.length === 0 ) this.innerHTML = '<div>No games yet.</div>';
 
-            var div = document.createElement('div'),
-                link = document.createElement('a');
+            S.utils.forEach(user.games, function() {
 
-            link.href = '/#/game/' + this.id;
-            link.innerHTML = 'Started ' + moment(this.startedAt).format('MMMM Do, YYYY');
-            link.innerHTML += ' at ';
-            link.innerHTML += moment(this.startedAt).format('h:mm:ss a');
+                var div = document.createElement('div'),
+                    link = document.createElement('a');
 
-            div.appendChild(link);
-            _this.appendChild(div);
-        });
+                link.href = '/#/game/' + this.id;
+                link.innerHTML = 'Started ' + moment(this.startedAt).format('MMMM Do, YYYY');
+                link.innerHTML += ' at ';
+                link.innerHTML += moment(this.startedAt).format('h:mm:ss a');
+
+                div.appendChild(link);
+                _this.appendChild(div);
+            });
+        }
     },
     newGame: function() {
         var time = new Date().getTime();

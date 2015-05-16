@@ -13,6 +13,7 @@
             S.state.push(which);
         }
         S.renderTemplates(which);
+        S.state.prop();
         return S.state;
     };
 
@@ -23,6 +24,7 @@
             });
         }
         S.renderTemplates(which);
+        S.state.prop();
         return S.state;
     };
 
@@ -34,6 +36,26 @@
 
     S.var('events', ['click', 'mouseover', 'mouseout']);
     S.var('observers', []);
+
+    // add an observer to the list of observers
+    S.observers.add = function(observer) {
+        if ( S.observers.indexOf(observer) === -1 ) S.observers.push(observer);
+
+        var target = S[observer.target];
+        if ( target && target._observers.indexOf(observer) === -1 ) {
+            target._observers.push(observer);
+        }
+    };
+
+    // create a new observer.
+    // `target` must be a string that will listen for changes to S[target]
+    S.Observer = function(node, target, cb) {
+        this.observer = node;
+        this.target = target;
+        this.func = cb;
+
+        return this;
+    };
 
     S.addEventHandlersToTemplates = function(templates, events) {
 
@@ -75,12 +97,14 @@
             S.utils.forEach(
                 observers,
                 function() {
-                    var target = this.getAttribute('data-observe');
-                    S.observers.push({
-                        observer: this,
-                        target: target,
-                        func: context[this.getAttribute('data-do')]
-                    });
+
+                    var observer = this,
+                        target = this.getAttribute('data-observe'),
+                        func = context[this.getAttribute('data-do')];
+
+                    var observerObj = new S.Observer(observer, target, func);
+
+                    S.observers.add(observerObj);
                 }
             );
         });
@@ -139,7 +163,6 @@
         if ( route[0] in states ) {
 
             state = states[route[0]];
-            console.log('adding', state);
             S.state.addState(state);
 
             // delete, loop through and remove
@@ -217,8 +240,26 @@
         });
     };
 
+    // ----- State Observer
+
+    S.StateObserver = new S.Observer(null, 'state', function() {
+        console.log('state changed');
+        S.utils.forEach(S.StateObserver.stateFunctions, function() {
+            console.log('performing state function')
+            this();
+        });
+    });
+    S.StateObserver.stateFunctions = [];
+    S.observers.add(S.StateObserver);
+
     // ----- Games
 
+    /* function gameState() {
+        if ( S.state.hasState('game') ) {
+            console.log('game time')
+        }
+    }
 
+    S.StateObserver.stateFunctions.push(gameState); */
 
 })();

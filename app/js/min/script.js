@@ -31,11 +31,16 @@ S.var = function(name, value) {
 S.utils = {};
 
 S.utils.prop = function(k, v) {
-    this[k] = v;
+
+    var _this = this;
+
+    // set property
+    if ( k && v ) this[k] = v;
+
     // publish changes
-    this._observers.forEach(function(ob) {
-        ob.func.call(ob.observer, this);
-    }, this);
+    S.utils.forEach(this._observers, function() {
+        if ( this.func ) this.func.call(this.observer, _this);
+    });
 };
 
 S.utils.show = function(el) {
@@ -117,21 +122,24 @@ S.templates.loggedIn = {
         // remove any existing content
         this.innerHTML = '';
 
-        if ( user.games.length === 0 ) this.innerHTML = '<div>No games yet.</div>';
+        if ( user ) {
 
-        S.utils.forEach(user.games, function() {
+            if ( user.games.length === 0 ) this.innerHTML = '<div>No games yet.</div>';
 
-            var div = document.createElement('div'),
-                link = document.createElement('a');
+            S.utils.forEach(user.games, function() {
 
-            link.href = '/#/game/' + this.id;
-            link.innerHTML = 'Started ' + moment(this.startedAt).format('MMMM Do, YYYY');
-            link.innerHTML += ' at ';
-            link.innerHTML += moment(this.startedAt).format('h:mm:ss a');
+                var div = document.createElement('div'),
+                    link = document.createElement('a');
 
-            div.appendChild(link);
-            _this.appendChild(div);
-        });
+                link.href = '/#/game/' + this.id;
+                link.innerHTML = 'Started ' + moment(this.startedAt).format('MMMM Do, YYYY');
+                link.innerHTML += ' at ';
+                link.innerHTML += moment(this.startedAt).format('h:mm:ss a');
+
+                div.appendChild(link);
+                _this.appendChild(div);
+            });
+        }
     },
     newGame: function() {
         var time = new Date().getTime();
@@ -158,6 +166,7 @@ S.templates.loggedIn = {
             S.state.push(which);
         }
         S.renderTemplates(which);
+        S.state.prop();
         return S.state;
     };
 
@@ -168,6 +177,7 @@ S.templates.loggedIn = {
             });
         }
         S.renderTemplates(which);
+        S.state.prop();
         return S.state;
     };
 
@@ -179,6 +189,26 @@ S.templates.loggedIn = {
 
     S.var('events', ['click', 'mouseover', 'mouseout']);
     S.var('observers', []);
+
+    // add an observer to the list of observers
+    S.observers.add = function(observer) {
+        if ( S.observers.indexOf(observer) === -1 ) S.observers.push(observer);
+
+        var target = S[observer.target];
+        if ( target && target._observers.indexOf(observer) === -1 ) {
+            target._observers.push(observer);
+        }
+    };
+
+    // create a new observer.
+    // `target` must be a string that will listen for changes to S[target]
+    S.Observer = function(node, target, cb) {
+        this.observer = node;
+        this.target = target;
+        this.func = cb;
+
+        return this;
+    };
 
     S.addEventHandlersToTemplates = function(templates, events) {
 
@@ -220,12 +250,14 @@ S.templates.loggedIn = {
             S.utils.forEach(
                 observers,
                 function() {
-                    var target = this.getAttribute('data-observe');
-                    S.observers.push({
-                        observer: this,
-                        target: target,
-                        func: context[this.getAttribute('data-do')]
-                    });
+
+                    var observer = this,
+                        target = this.getAttribute('data-observe'),
+                        func = context[this.getAttribute('data-do')];
+
+                    var observerObj = new S.Observer(observer, target, func);
+
+                    S.observers.add(observerObj);
                 }
             );
         });
@@ -284,7 +316,6 @@ S.templates.loggedIn = {
         if ( route[0] in states ) {
 
             state = states[route[0]];
-            console.log('adding', state);
             S.state.addState(state);
 
             // delete, loop through and remove
@@ -362,9 +393,27 @@ S.templates.loggedIn = {
         });
     };
 
+    // ----- State Observer
+
+    S.StateObserver = new S.Observer(null, 'state', function() {
+        console.log('state changed');
+        S.utils.forEach(S.StateObserver.stateFunctions, function() {
+            console.log('performing state function')
+            this();
+        });
+    });
+    S.StateObserver.stateFunctions = [];
+    S.observers.add(S.StateObserver);
+
     // ----- Games
 
+    /* function gameState() {
+        if ( S.state.hasState('game') ) {
+            console.log('game time')
+        }
+    }
 
+    S.StateObserver.stateFunctions.push(gameState); */
 
 })();
 

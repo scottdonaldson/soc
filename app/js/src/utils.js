@@ -31,11 +31,16 @@ S.var = function(name, value) {
 S.utils = {};
 
 S.utils.prop = function(k, v) {
-    this[k] = v;
+
+    var _this = this;
+
+    // set property
+    if ( k && v ) this[k] = v;
+
     // publish changes
-    this._observers.forEach(function(ob) {
-        ob.func.call(ob.observer, this);
-    }, this);
+    S.utils.forEach(this._observers, function() {
+        if ( this.func ) this.func.call(this.observer, _this);
+    });
 };
 
 S.utils.show = function(el) {
