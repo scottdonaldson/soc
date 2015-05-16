@@ -15,7 +15,8 @@ var paths = {
     cssIn: 'app/scss/**/*.scss',
     cssOut: 'app/css/',
     jsIn: ['utils', 'init', 'script'],
-    jsOut: 'app/js/min'
+    jsOut: 'app/js/min',
+    html: 'app/index.html'
 };
 paths.jsIn.forEach(function(path, i) {
     paths.jsIn[i] = jsPrefix + path + '.js';
@@ -67,6 +68,8 @@ gulp.task('serve', ['css', 'js'], function() {
 
     gulp.watch( paths.cssIn, ['css'] );
     gulp.watch( paths.jsIn, ['js'] ).on('change', reload);
+
+    gulp.watch( paths.html ).on('change', reload);
 
 
 });

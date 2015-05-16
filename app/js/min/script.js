@@ -19,7 +19,7 @@ S.var = function(name, value) {
         this._observers.forEach(function(ob) {
             ob.func.call(ob.observer, this);
         }, this);
-    }
+    };
 
     // loop through observers, update them with this object
     S.utils.forEach(S.observers, function(){
@@ -250,12 +250,32 @@ S.utils.randomGameId = function(time) {
     // ----- Routing
 
     S.var('router', function() {
-        S.router.test();
+        var route = location.hash.replace('#/', '');
+        route = route.split('/');
+        S.router.parse(route);
     });
 
-    S.router.test = function() {
-        console.log('testing router');
-    }
+    S.router.parse = function(route) {
+
+        var states = {
+            '': 'home',
+            'game': 'game'
+        },
+        state;
+
+        if ( route[0] in states ) {
+
+            state = states[route[0]];
+            S.state.addState(state);
+
+            // delete, loop through and remove
+            delete states[this];
+            for ( state in states ) {
+                S.state.removeState(state);
+            }
+        }
+        console.log(S.state);
+    };
 
     // ----- Logged in/out and
     // ----- User stuff

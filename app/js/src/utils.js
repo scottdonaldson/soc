@@ -19,7 +19,7 @@ S.var = function(name, value) {
         this._observers.forEach(function(ob) {
             ob.func.call(ob.observer, this);
         }, this);
-    }
+    };
 
     // loop through observers, update them with this object
     S.utils.forEach(S.observers, function(){
