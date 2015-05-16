@@ -13,13 +13,7 @@ S.var = function(name, value) {
     S[name]._observers = [];
 
     // notify observers when changes are made
-    S[name].prop = function(k, v) {
-        this[k] = v;
-        // publish changes
-        this._observers.forEach(function(ob) {
-            ob.func.call(ob.observer, this);
-        }, this);
-    };
+    S[name].prop = S.utils.prop;
 
     // loop through observers, update them with this object
     S.utils.forEach(S.observers, function(){
@@ -35,6 +29,14 @@ S.var = function(name, value) {
 // ----- Utility functions
 
 S.utils = {};
+
+S.utils.prop = function(k, v) {
+    this[k] = v;
+    // publish changes
+    this._observers.forEach(function(ob) {
+        ob.func.call(ob.observer, this);
+    }, this);
+};
 
 S.utils.show = function(el) {
     this.style.display = 'block';

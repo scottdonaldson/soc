@@ -3,7 +3,7 @@
     function init() {
 
         S.dataRef.onAuth(S.checkForLogin);
-        S.router();
+        S.router.init();
         S.renderTemplates();
 
     }

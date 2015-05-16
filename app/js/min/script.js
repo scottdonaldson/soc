@@ -13,13 +13,7 @@ S.var = function(name, value) {
     S[name]._observers = [];
 
     // notify observers when changes are made
-    S[name].prop = function(k, v) {
-        this[k] = v;
-        // publish changes
-        this._observers.forEach(function(ob) {
-            ob.func.call(ob.observer, this);
-        }, this);
-    };
+    S[name].prop = S.utils.prop;
 
     // loop through observers, update them with this object
     S.utils.forEach(S.observers, function(){
@@ -35,6 +29,14 @@ S.var = function(name, value) {
 // ----- Utility functions
 
 S.utils = {};
+
+S.utils.prop = function(k, v) {
+    this[k] = v;
+    // publish changes
+    this._observers.forEach(function(ob) {
+        ob.func.call(ob.observer, this);
+    }, this);
+};
 
 S.utils.show = function(el) {
     this.style.display = 'block';
@@ -87,6 +89,60 @@ S.utils.randomGameId = function(time) {
 
 })();
 
+// ----- Templates
+
+S.var('templates', {});
+
+S.templates.loggedOut = {
+    login: function() {
+        S.dataRef.authWithOAuthPopup('google', function(error, authData) {
+            if ( !error ) {
+                S.logInUser(authData.google.id, authData.google.displayName);
+                S.state.removeState('loggedOut').addState('loggedIn');
+            }
+        });
+    }
+};
+
+S.templates.loggedIn = {
+    logout: function() {
+        S.state.removeState('loggedIn').addState('loggedOut');
+        S.currentUser = null;
+        S.dataRef.unauth();
+    },
+    listGames: function(user) {
+
+        var _this = this;
+
+        // remove any existing content
+        this.innerHTML = '';
+
+        if ( user.games.length === 0 ) this.innerHTML = '<div>No games yet.</div>';
+
+        S.utils.forEach(user.games, function() {
+
+            var div = document.createElement('div'),
+                link = document.createElement('a');
+
+            link.href = '/#/game/' + this.id;
+            link.innerHTML = 'Started ' + moment(this.startedAt).format('MMMM Do, YYYY');
+            link.innerHTML += ' at ';
+            link.innerHTML += moment(this.startedAt).format('h:mm:ss a');
+
+            div.appendChild(link);
+            _this.appendChild(div);
+        });
+    },
+    newGame: function() {
+        var time = new Date().getTime();
+        S.dataRef.child('games').push({
+            startedAt: time,
+            id: S.utils.randomGameId(time),
+            users: [ S.currentUser.id ]
+        });
+    }
+};
+
 (function() {
 
     S = window.S || {};
@@ -117,51 +173,6 @@ S.utils.randomGameId = function(time) {
 
     S.state.hasState = function(which) {
         return S.state.indexOf(which) > -1;
-    };
-
-    // ----- Templates
-
-    S.var('templates', {});
-
-    S.templates.loggedOut = {
-        login: function() {
-            S.dataRef.authWithOAuthPopup('google', function(error, authData) {
-                if ( !error ) {
-                    S.logInUser(authData.google.id, authData.google.displayName);
-                    S.state.removeState('loggedOut').addState('loggedIn');
-                }
-            });
-        }
-    };
-
-    S.templates.loggedIn = {
-        logout: function() {
-            S.state.removeState('loggedIn').addState('loggedOut');
-            S.dataRef.unauth();
-        },
-        listGames: function(user) {
-
-            var _this = this;
-
-            // remove any existing content
-            this.innerHTML = '';
-
-            if ( user.games.length === 0 ) this.innerHTML = '<div>No games yet.</div>';
-
-            S.utils.forEach(user.games, function() {
-                var div = document.createElement('div');
-                div.innerHTML += this.id;
-                _this.appendChild(div);
-            });
-        },
-        newGame: function() {
-            var time = new Date().getTime();
-            S.dataRef.child('games').push({
-                startedAt: time,
-                id: S.utils.randomGameId(time),
-                users: [ S.currentUser.id ]
-            });
-        }
     };
 
     // ----- Event handlers and observers
@@ -249,11 +260,18 @@ S.utils.randomGameId = function(time) {
 
     // ----- Routing
 
-    S.var('router', function() {
+    S.var('router', {});
+
+    S.router.init = function() {
+        S.router.route();
+        window.onhashchange = S.router.route;
+    };
+
+    S.router.route = function() {
         var route = location.hash.replace('#/', '');
         route = route.split('/');
         S.router.parse(route);
-    });
+    };
 
     S.router.parse = function(route) {
 
@@ -266,15 +284,15 @@ S.utils.randomGameId = function(time) {
         if ( route[0] in states ) {
 
             state = states[route[0]];
+            console.log('adding', state);
             S.state.addState(state);
 
             // delete, loop through and remove
-            delete states[this];
+            delete states[route[0]];
             for ( state in states ) {
                 S.state.removeState(state);
             }
         }
-        console.log(S.state);
     };
 
     // ----- Logged in/out and
@@ -355,7 +373,7 @@ S.utils.randomGameId = function(time) {
     function init() {
 
         S.dataRef.onAuth(S.checkForLogin);
-        S.router();
+        S.router.init();
         S.renderTemplates();
 
     }

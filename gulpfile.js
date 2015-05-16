@@ -14,7 +14,7 @@ var jsPrefix = 'app/js/src/';
 var paths = {
     cssIn: 'app/scss/**/*.scss',
     cssOut: 'app/css/',
-    jsIn: ['utils', 'init', 'script'],
+    jsIn: ['utils', 'templates', 'init', 'script'],
     jsOut: 'app/js/min',
     html: 'app/index.html'
 };

@@ -30,51 +30,6 @@
         return S.state.indexOf(which) > -1;
     };
 
-    // ----- Templates
-
-    S.var('templates', {});
-
-    S.templates.loggedOut = {
-        login: function() {
-            S.dataRef.authWithOAuthPopup('google', function(error, authData) {
-                if ( !error ) {
-                    S.logInUser(authData.google.id, authData.google.displayName);
-                    S.state.removeState('loggedOut').addState('loggedIn');
-                }
-            });
-        }
-    };
-
-    S.templates.loggedIn = {
-        logout: function() {
-            S.state.removeState('loggedIn').addState('loggedOut');
-            S.dataRef.unauth();
-        },
-        listGames: function(user) {
-
-            var _this = this;
-
-            // remove any existing content
-            this.innerHTML = '';
-
-            if ( user.games.length === 0 ) this.innerHTML = '<div>No games yet.</div>';
-
-            S.utils.forEach(user.games, function() {
-                var div = document.createElement('div');
-                div.innerHTML += this.id;
-                _this.appendChild(div);
-            });
-        },
-        newGame: function() {
-            var time = new Date().getTime();
-            S.dataRef.child('games').push({
-                startedAt: time,
-                id: S.utils.randomGameId(time),
-                users: [ S.currentUser.id ]
-            });
-        }
-    };
-
     // ----- Event handlers and observers
 
     S.var('events', ['click', 'mouseover', 'mouseout']);
@@ -160,11 +115,18 @@
 
     // ----- Routing
 
-    S.var('router', function() {
+    S.var('router', {});
+
+    S.router.init = function() {
+        S.router.route();
+        window.onhashchange = S.router.route;
+    };
+
+    S.router.route = function() {
         var route = location.hash.replace('#/', '');
         route = route.split('/');
         S.router.parse(route);
-    });
+    };
 
     S.router.parse = function(route) {
 
@@ -177,15 +139,15 @@
         if ( route[0] in states ) {
 
             state = states[route[0]];
+            console.log('adding', state);
             S.state.addState(state);
 
             // delete, loop through and remove
-            delete states[this];
+            delete states[route[0]];
             for ( state in states ) {
                 S.state.removeState(state);
             }
         }
-        console.log(S.state);
     };
 
     // ----- Logged in/out and
