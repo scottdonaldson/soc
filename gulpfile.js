@@ -16,7 +16,7 @@ var paths = {
     cssOut: 'app/css/',
     jsIn: ['utils', 'templates', 'init', 'script'],
     jsOut: 'app/js/min',
-    html: 'app/index.html'
+    html: ['app/index.html', 'app/game.html']
 };
 paths.jsIn.forEach(function(path, i) {
     paths.jsIn[i] = jsPrefix + path + '.js';
@@ -39,9 +39,15 @@ gulp.task('css', function() {
 
 });
 
+gulp.task('game', function() {
+    gulp.src(['app/js/src/gamehelpers.js', 'app/js/src/game.js'])
+        //.pipe(uglify())
+        .pipe(gulp.dest('app/js/min'));
+});
+
 gulp.task('js', function() {
 
-    return gulp.src( paths.jsIn )
+    gulp.src( paths.jsIn )
         //.pipe(uglify())
         .pipe(concat('script.js'))
         .pipe(gulp.dest( paths.jsOut ));
@@ -68,6 +74,9 @@ gulp.task('serve', ['css', 'js'], function() {
 
     gulp.watch( paths.cssIn, ['css'] );
     gulp.watch( paths.jsIn, ['js'] ).on('change', reload);
+
+    // game
+    gulp.watch( ['app/js/src/gamehelpers.js', 'app/js/src/game.js'], ['game'] ).on('change', reload);
 
     gulp.watch( paths.html ).on('change', reload);
 
