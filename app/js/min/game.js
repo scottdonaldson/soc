@@ -1,6 +1,11 @@
 (function(){
 
-var camera, scene, renderer;
+var camera, scene, renderer, controls;
+
+var unit = 100;
+
+window.board = {};
+board.tiles = [];
 
 function init() {
     world = new T('container');
@@ -19,19 +24,20 @@ function init() {
     groundPlane();
 
     makeBoard();
+    loadGameData();
+
+
 }
 
 // ----- Camera
 function setCamera() {
-    camera.x(400);
-    camera.y(200);
-    camera.z(400);
+    camera.position.set(1000, 500, 1000);
 }
 
 // ----- Controls
 function orbitControls() {
 
-    var controls = new THREE.OrbitControls( camera, renderer.domElement );
+    controls = new THREE.OrbitControls( camera, renderer.domElement );
 
     function orbitAnimate() {
         requestAnimationFrame(orbitAnimate);
@@ -39,6 +45,8 @@ function orbitControls() {
     }
 
     controls.damping = 0.5;
+    controls.minDistance = 200;
+    controls.maxDistance = 2000;
     orbitAnimate();
 }
 
@@ -81,30 +89,21 @@ function setLights() {
 
 // ----- Ground Plane
 function groundPlane() {
-    var ground = world.mesh(Box(100000, 1, 100000), Material('#ccc'));
-    ground.y(-1);
+    var ground = world.mesh(Box(100000, 1, 100000), Material('#35a'));
+    ground.y(-21);
     ground.exclude = true;
 }
 
 function hexagon(x, y, color) {
 
-    x = x || 0;
-    y = y || 0;
-
     var centerX = x,
-        centerY = y;
-
-    var unit = 100,
-        hexShape = new THREE.Shape();
-
-    var offsetX = Math.sqrt(0.75 * unit * unit),
-        offsetY = unit / 2;
-
-
-    centerX *= offsetX * 2;
-    centerX += y * offsetX;
-
-    centerY *= 1.5 * unit;
+        centerY = y,
+        hexShape = new THREE.Shape(),
+        offsetX = Math.sqrt(0.75 * unit * unit),
+        offsetY = unit / 2,
+        hexGeo,
+        hexMesh,
+        pos;
 
     hexShape.moveTo(offsetX, offsetY);
     hexShape.lineTo(0, unit);
@@ -113,16 +112,70 @@ function hexagon(x, y, color) {
     hexShape.lineTo(0, -unit);
     hexShape.lineTo(offsetX, -offsetY);
 
-    var hexGeo = new THREE.ExtrudeGeometry(hexShape, {
-        amount: 8,
+    hexGeo = new THREE.ExtrudeGeometry(hexShape, {
+        amount: 10,
         bevelEnabled: false
     });
 
     hexGeo.applyMatrix(new THREE.Matrix4().makeScale(0.99, 0.99, 1));
 
-    var hexMesh = world.mesh(hexGeo, Material(color || '#fff'));
+    hexMesh = world.mesh(hexGeo, Material('lambert', {
+        color: color || '#fff'
+    }));
     hexMesh.rotation.x = -Math.PI / 2;
-    hexMesh.position.set(centerX, 0, centerY);
+
+    pos = position(x, y);
+    hexMesh.position.set(pos.x, -20, pos.y);
+
+    // camera target should be center hex
+    if ( x === 0 && y === 2 ) {
+        controls.target.set(pos.x, 0, pos.y);
+    }
+
+    hexMesh.coords = {
+        x: x,
+        y: y
+    };
+
+    return hexMesh;
+}
+
+function position(x, y) {
+    var centerX = x,
+        centerY = y,
+        offsetX = Math.sqrt(0.75 * unit * unit),
+        offsetY = unit / 2;
+
+    centerX *= offsetX * 2;
+    centerX += y * offsetX;
+
+    centerY *= 1.5 * unit;
+
+    return {
+        x: centerX,
+        y: centerY
+    };
+}
+
+function triangulate(pt1, pt2, pt3) {
+
+    var positions = [],
+        meanX = 0,
+        meanY = 0;
+
+    [].slice.call(arguments).forEach(function(pt) {
+        positions.push(position(pt.x, pt.y));
+    });
+
+    positions.forEach(function(pt) {
+        meanX += 0.333 * pt.x;
+        meanY += 0.333 * pt.y;
+    });
+
+    return {
+        x: meanX,
+        y: meanY
+    };
 }
 
 function makeBoard() {
@@ -137,7 +190,7 @@ function makeBoard() {
 
     function drawHex(x, y, index) {
         if ( x - startX[index] < max[index]) {
-            hexagon(x, y);
+            board.tiles.push(hexagon(x, y));
             // move along this row
             return drawHex(x + 1, y, index);
         } else if ( x - startX[index] === max[index] ) {
@@ -146,6 +199,65 @@ function makeBoard() {
     }
 
     startRow(0, 0);
+}
+
+function loadGameData() {
+    // dummy for now
+    var resources = [
+        'sheep', 'wood', 'ore', 'brick', 'wheat', 'ore', 'desert', 'ore', 'wood', 'wood', 'sheep', 'wheat', 'brick', 'sheep', 'wheat', 'brick', 'ore', 'sheep', 'wheat'
+    ];
+
+    resources.forEach(function(r, i) {
+        tileColor(board.tiles[i].material, r);
+    });
+
+    settlement({x:1,y:1},{x:2,y:1},{x:1,y:2}, '#f00');
+    settlement({x:-2,y:1},{x:-1,y:1},{x:-2,y:2}, '#0f0');
+    settlement({x:0,y:3},{x:0,y:4},{x:-1,y:4}, '#ff0');
+}
+
+function tileColor(tile, resource) {
+    var colors = {
+        'sheep': '#0d5',
+        'wheat': '#fe7',
+        'brick': '#f94',
+        'ore': '#999',
+        'wood': '#0a3',
+        'desert': '#ff0'
+    };
+    tile.color = new THREE.Color(colors[resource]);
+}
+
+function settlement(pt1, pt2, pt3, color) {
+
+    var base = world.mesh(Box(30, 20, 20), Material(color || '#fff')),
+        roofShape,
+        roofGeo,
+        roofMesh,
+        pos = triangulate(pt1, pt2, pt3),
+        rotation = Math.random() * 2 * Math.PI;
+
+    roofShape = new THREE.Shape();
+    roofShape.moveTo(0, 0);
+    roofShape.lineTo(20, 0);
+    roofShape.lineTo(10, 10);
+
+    roofGeo = new THREE.ExtrudeGeometry(roofShape, {
+        amount: 30,
+        bevelEnabled: false
+    });
+    roofGeo.applyMatrix(new THREE.Matrix4().makeTranslation(-10, 5, -15));
+
+    roofMesh = world.mesh(roofGeo, Material(color || '#fff'));
+    roofMesh.rotation.y = rotation + (Math.PI / 2);
+
+    roofMesh.position.x = pos.x;
+    roofMesh.position.z = pos.y;
+
+    base.position.y -= 10;
+    base.position.x = pos.x;
+    base.position.z = pos.y;
+    base.rotation.y = rotation;
 }
 
 document.addEventListener('DOMContentLoaded', init);
