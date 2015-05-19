@@ -25,11 +25,6 @@ function init() {
 
     makeBoard();
     loadGameData();
-
-    road({x:0,y:3},{x:1,y:2});
-    road({x:1,y:3},{x:1,y:2});
-    road({x:1,y:3},{x:2,y:2}, '#f00');
-    road({x:2,y:2},{x:1,y:2}, '#f00');
 }
 
 // ----- Camera
@@ -65,7 +60,7 @@ function createSky() {
         exponent:	 { type: "f", value: 0.6 }
     }
 
-    scene.fog = new THREE.Fog( null, 1000, 20000 );
+    scene.fog = new THREE.Fog( null, 1000, 15000 );
     scene.fog.color.copy( uniforms.bottomColor.value );
 
     skyGeo = new THREE.SphereGeometry( 20000, 32, 15 );
@@ -88,6 +83,9 @@ function setLights() {
         lightZ = 2000;
 
     light.position.set(lightX, lightY, lightZ);
+
+    var light2 = world.light('#fff', 0.25, false);
+    light2.position.set(500, 2500, -2000);
 }
 
 // ----- Ground Plane
@@ -214,9 +212,14 @@ function loadGameData() {
         tileColor(board.tiles[i].material, r);
     });
 
-    settlement({x:1,y:1},{x:2,y:1},{x:1,y:2}, '#f00');
+    city({x:1,y:3},{x:2,y:2},{x:1,y:2}, '#f00');
     settlement({x:-2,y:1},{x:-1,y:1},{x:-2,y:2}, '#0f0');
     settlement({x:0,y:3},{x:0,y:4},{x:-1,y:4}, '#ff0');
+
+    road({x:0,y:3},{x:1,y:2});
+    road({x:1,y:3},{x:1,y:2});
+    road({x:1,y:3},{x:2,y:2}, '#f00');
+    road({x:2,y:2},{x:1,y:2}, '#f00');
 }
 
 function tileColor(tile, resource) {
@@ -263,6 +266,45 @@ function settlement(pt1, pt2, pt3, color) {
     base.rotation.y = rotation;
 }
 
+function city(pt1, pt2, pt3, color) {
+
+    var base = world.mesh(Box(40, 20, 20), Material(color || '#fff')),
+        middleGeo = Box(20, 15, 20),
+        middleMesh,
+        roofShape,
+        roofGeo,
+        roofMesh,
+        pos = triangulate(pt1, pt2, pt3),
+        rotation = Math.random() * 2 * Math.PI;
+
+    roofShape = new THREE.Shape();
+    roofShape.moveTo(0, 0);
+    roofShape.lineTo(20, 0);
+    roofShape.lineTo(10, 10);
+
+    roofGeo = new THREE.ExtrudeGeometry(roofShape, {
+        amount: 20,
+        bevelEnabled: false
+    });
+    roofGeo.applyMatrix(new THREE.Matrix4().makeTranslation(0, 20, -10));
+
+    roofMesh = world.mesh(roofGeo, Material(color || '#fff'));
+    roofMesh.rotation.y = rotation;
+
+    roofMesh.position.x = pos.x;
+    roofMesh.position.z = pos.y;
+
+    middleGeo.applyMatrix(new THREE.Matrix4().makeTranslation(10, -2.5, 0));
+    middleMesh = world.mesh(middleGeo, Material(color || '#fff'))
+    middleMesh.position.set(pos.x, 20, pos.y);
+    middleMesh.rotation.y = rotation;
+
+    base.position.y -= 10;
+    base.position.x = pos.x;
+    base.position.z = pos.y;
+    base.rotation.y = rotation;
+}
+
 function road(pt1, pt2, color) {
 
     var pos1 = position(pt1.x, pt1.y),
@@ -270,9 +312,8 @@ function road(pt1, pt2, color) {
         mean = {
             x: 0.5 * (pos1.x + pos2.x),
             y: 0.5 * (pos1.y + pos2.y)
-        };
-
-    var road = world.mesh(Box(10, 10, 50), Material(color || '#fff')),
+        },
+        road = world.mesh(Box(10, 10, 50), Material(color || '#fff')),
         angle = Math.atan((pos2.x - pos1.x) / (pos2.y - pos1.y));
 
     road.position.set(mean.x, -5, mean.y);
