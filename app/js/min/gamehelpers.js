@@ -42,10 +42,10 @@ T = function(id) {
 
         renderer.setSize( window.innerWidth, window.innerHeight );
 
-        render();
+        this.render();
     }
 
-    window.addEventListener( 'resize', onWindowResize, false );
+    window.addEventListener( 'resize', onWindowResize.bind(this), false );
 
     return this;
 }
@@ -114,11 +114,14 @@ Material = function(type, attrs) {
         attrs = { color: '#fff' };
     }
 
+    if ( 'opacity' in attrs ) attrs.transparent = true;
+
     return new THREE[types[theType]](attrs);
 };
 
 T.prototype.mesh = function(geo, material) {
-    if (!material) material = Material();
+    if ( !material ) material = Material();
+
     var mesh = new T.Mesh(geo, material, this),
         height,
         yVertices,
@@ -131,7 +134,6 @@ T.prototype.mesh = function(geo, material) {
     highest = Math.max.apply(null, yVertices);
     lowest = Math.min.apply(null, yVertices);
     height = highest - lowest;
-
 
     // set base of mesh at xz plane
     mesh.translateY(height / 2);
